@@ -21,6 +21,7 @@ Drupal.dreditor.syntaxAutocomplete = function (element) {
 
   this.$suggestion = $('<span></span>');
   this.$tooltip = $('<div class="dreditor-tooltip">TAB: </div>')
+    .hide()
     .insertAfter(this.$element)
     .append(this.$suggestion);
 
@@ -84,12 +85,16 @@ Drupal.dreditor.syntaxAutocomplete.prototype.keyupHandler = function (event) {
   }
   var self = event.data.syntax, pos = this.selectionEnd;
   // Retrieve the needle: The word before the cursor.
-  var needle = this.value.substring(0, pos).match(/[^\s>(]+$/);
+  // Minimally support punctuation: An opening parenthesis delimits the needle.
+  // Negative look-behinds (?<!) are not supported. Therefore, we include the
+  // parenthesis in the positive search pattern, but exclude it from the
+  // actually matched needle.
+  var needle = this.value.substring(0, pos).match(/(?: \()?([^\s>]+[^\s])$/);
   // If there is a needle, check whether to show a suggestion.
   // @todo Revamp the entire following conditional code to call
   //   delSuggestion() only once.
-  if (needle) {
-    self.needle = needle[0];
+  if (needle && needle[1]) {
+    self.needle = needle[1];
     // If the needle is found in the haystack of suggestions, show a suggestion.
     var suggestion;
     if (suggestion = self.checkSuggestion(self.needle)) {
@@ -135,7 +140,7 @@ Drupal.dreditor.syntaxAutocomplete.prototype.setSuggestion = function (suggestio
   if (suggestion !== self.suggestion) {
     self.suggestion = suggestion;
     self.$suggestion.text(self.suggestion.replace('^', ''));
-    self.$tooltip.css({ display: 'inline-block' });
+    self.$tooltip.show();
   }
 };
 
@@ -253,6 +258,74 @@ Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.comment = function (nee
     if (self.suggestionCommentList[matches[1]]) {
       return '<a href="#' + self.suggestionCommentList[matches[1]] + '">#' + matches[1] + '</a>^';
     }
+  }
+  return false;
+};
+
+/**
+ * Suggest markdown/wiki-alike conversions.
+ */
+Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.typo = {
+  '--': "— ^",
+  '->': "→ ^",
+  '---': "<hr />\n\n^",
+  'tm': '™^',
+  '(c)': '©^'
+};
+
+/**
+ * Suggest a code conversion.
+ */
+Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.code = function (needle) {
+  var matches;
+  // OO class names and methods:
+  // WebTestBase, ModuleHandler
+  // Drupal\foo
+  // Foo::bar()
+  // Foo::$bar
+  // 1. Classname: [A-Z][a-z]+(?:[A-Z][a-z]+)*
+  //    OR
+  // 1. Namespace: [A-Za-z]+(?:\\[A-Za-z]+)+
+  // 2. Delimiter: ::
+  // 3. Variable:  \$[a-zA-Z_][a-zA-Z0-9_]+
+  //    OR
+  // 3. Function:  [a-zA-Z_][a-zA-Z0-9_]+\(\)
+  // -> /^(?:classname|namespace)?(?:delimiter)?(?:variable|function)?$/
+  if (matches = /^(?:[A-Z][a-z]+(?:[A-Z][a-z]+)*|[A-Za-z]+(?:\\[A-Za-z]+)+)?(?:::)?(?:\$[a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z_][a-zA-Z0-9_]+\(\))?$/.exec(needle)) {
+    return '<code>' + matches[0] + '</code>^';
+  }
+  return false;
+};
+
+/**
+ * Suggest an api.d.o link conversion.
+ */
+Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.api = function (needle) {
+  var matches;
+  if (matches = needle.match('^https?://api.drupal.org/api/(.+)')) {
+    // Resources:
+    // /%project/%file-path/%type/%resource/%version
+    // /%project/%file-path/%type/calls|references/%resource/%version
+    // Files:
+    // /%project/%file-path/%version
+    var parts, resource, type;
+    parts = matches[1].split('/');
+    // Remove the version, so we can determine the resource type.
+    parts.pop();
+    type = parts[2] ? parts[2] : 'file';
+    // Depending on the copied URL and browser, the resource may contain
+    // URL-encoded exclamation marks ("!").
+    resource = decodeURIComponent(parts.pop());
+
+    if (type === 'function') {
+      // Append "()" to function name.
+      return '<a href="' + matches[0] + '">' + resource + '()</a>^';
+    }
+    else if (type === 'file') {
+      // Only output the file name without path.
+      return '<a href="' + matches[0] + '">' + resource.match(/[^!]+$/)[0] + '</a>^';
+    }
+    return '<a href="' + matches[0] + '">' + resource + '</a>^';
   }
   return false;
 };
