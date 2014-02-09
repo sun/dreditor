@@ -283,15 +283,16 @@ Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.code = function (needle
   // Drupal\foo
   // Foo::bar()
   // Foo::$bar
+  // $account->id()
   // 1. Classname: [A-Z][a-z]+(?:[A-Z][a-z]+)*
   //    OR
   // 1. Namespace: [A-Za-z]+(?:\\[A-Za-z]+)+
   // 2. Delimiter: ::
   // 3. Variable:  \$[a-zA-Z_][a-zA-Z0-9_]+
-  //    OR
-  // 3. Function:  [a-zA-Z_][a-zA-Z0-9_]+\(\)
-  // -> /^(?:classname|namespace)?(?:delimiter)?(?:variable|function)?$/
-  if (matches = /^(?:[A-Z][a-z]+(?:[A-Z][a-z]+)*|[A-Za-z]+(?:\\[A-Za-z]+)+)?(?:::)?(?:\$[a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z_][a-zA-Z0-9_]+\(\))?$/.exec(needle)) {
+  // 4. Delimiter: ->
+  // 5. Function:  [a-zA-Z_][a-zA-Z0-9_]+\(\)
+  // -> /^(?:classname|namespace)?(?:delimiter)?(?:variable)?(?:delimiter)?(?:function)?$/
+  if (matches = /^(?:[A-Z][a-z]+(?:[A-Z][a-z]+)*|[A-Za-z]+(?:\\[A-Za-z]+)+)?(?:::)?(?:\$[a-zA-Z_][a-zA-Z0-9_]+)?(?:\->)?(?:[a-zA-Z_][a-zA-Z0-9_]+\(\))?$/.exec(needle)) {
     return '<code>' + matches[0] + '</code>^';
   }
   return false;
