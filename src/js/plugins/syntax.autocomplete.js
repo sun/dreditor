@@ -89,7 +89,7 @@ Drupal.dreditor.syntaxAutocomplete.prototype.keyupHandler = function (event) {
   // Negative look-behinds (?<!) are not supported. Therefore, we include the
   // parenthesis in the positive search pattern, but exclude it from the
   // actually matched needle.
-  var needle = this.value.substring(0, pos).match(/(?: \()?([^\s>]+)$/);
+  var needle = this.value.substring(0, pos).match(/(?: \()?([^\s>]+[^\s])$/);
   // If there is a needle, check whether to show a suggestion.
   // @todo Revamp the entire following conditional code to call
   //   delSuggestion() only once.
@@ -267,6 +267,7 @@ Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.comment = function (nee
  */
 Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.typo = {
   '--': "— ^",
+  '->': "→ ^",
   '---': "<hr />\n\n^",
   'tm': '™^',
   '(c)': '©^'
