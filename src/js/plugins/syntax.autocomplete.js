@@ -89,7 +89,7 @@ Drupal.dreditor.syntaxAutocomplete.prototype.keyupHandler = function (event) {
   // Negative look-behinds (?<!) are not supported. Therefore, we include the
   // parenthesis in the positive search pattern, but exclude it from the
   // actually matched needle.
-  var needle = this.value.substring(0, pos).match(/(?: \()?([^\s>]+[^\s])$/);
+  var needle = this.value.substring(0, pos).match(/(?: [\(\[])?([^\s]+)$/);
   // If there is a needle, check whether to show a suggestion.
   // @todo Revamp the entire following conditional code to call
   //   delSuggestion() only once.
@@ -283,15 +283,16 @@ Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.code = function (needle
   // Drupal\foo
   // Foo::bar()
   // Foo::$bar
+  // $account->id()
   // 1. Classname: [A-Z][a-z]+(?:[A-Z][a-z]+)*
   //    OR
   // 1. Namespace: [A-Za-z]+(?:\\[A-Za-z]+)+
   // 2. Delimiter: ::
   // 3. Variable:  \$[a-zA-Z_][a-zA-Z0-9_]+
-  //    OR
-  // 3. Function:  [a-zA-Z_][a-zA-Z0-9_]+\(\)
-  // -> /^(?:classname|namespace)?(?:delimiter)?(?:variable|function)?$/
-  if (matches = /^(?:[A-Z][a-z]+(?:[A-Z][a-z]+)*|[A-Za-z]+(?:\\[A-Za-z]+)+)?(?:::)?(?:\$[a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z_][a-zA-Z0-9_]+\(\))?$/.exec(needle)) {
+  // 4. Delimiter: ->
+  // 5. Function:  [a-zA-Z_][a-zA-Z0-9_]+\(\)
+  // -> /^(?:classname|namespace)?(?:delimiter)?(?:variable)?(?:delimiter)?(?:function)?$/
+  if (matches = /^(?:[A-Z][a-z]+(?:[A-Z][a-z]+)*|[A-Za-z]+(?:\\[A-Za-z]+)+)?(?:::)?(?:\$[a-zA-Z_][a-zA-Z0-9_]+)?(?:\->)?(?:[a-zA-Z_][a-zA-Z0-9_]+\(\))?$/.exec(needle)) {
     return '<code>' + matches[0] + '</code>^';
   }
   return false;
