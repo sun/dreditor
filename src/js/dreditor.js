@@ -193,6 +193,16 @@ Drupal.dreditor = {
     Drupal.attachBehaviors(Drupal.dreditor.context);
   },
 
+  loadedJS: {},
+
+  loadJS: function (pathname) {
+    if (!this.loadedJS.pathname) {
+      $.ajaxSetup({ cache: true });
+      $('head').append('<script type="javascript" src="' + pathname + '" />');
+      this.loadedJS.pathname = true;
+    }
+  },
+
   /**
    * Parse CSS classes of a DOM element into parameters.
    *
