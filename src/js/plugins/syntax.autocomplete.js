@@ -275,16 +275,23 @@ Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.typo = {
 
 /**
  * Suggest a code conversion.
- *
- * @todo
-    [::]$variables
-    ::methods()
-    Drupal\foo
-    WebTestBase
  */
 Drupal.dreditor.syntaxAutocomplete.prototype.suggestions.code = function (needle) {
   var matches;
-  if (matches = /^[a-zA-Z0-9_]+\(\)$|^[a-zA-Z0-9_]+::[a-zA-Z0-9_\(\)]+$/.exec(needle)) {
+  // OO class names and methods:
+  // WebTestBase, ModuleHandler
+  // Drupal\foo
+  // Foo::bar()
+  // Foo::$bar
+  // 1. Classname: [A-Z][a-z]+(?:[A-Z][a-z]+)*
+  //    OR
+  // 1. Namespace: [A-Za-z]+(?:\\[A-Za-z]+)+
+  // 2. Delimiter: ::
+  // 3. Variable:  \$[a-zA-Z_][a-zA-Z0-9_]+
+  //    OR
+  // 3. Function:  [a-zA-Z_][a-zA-Z0-9_]+\(\)
+  // -> /^(?:classname|namespace)?(?:delimiter)?(?:variable|function)?$/
+  if (matches = /^(?:[A-Z][a-z]+(?:[A-Z][a-z]+)*|[A-Za-z]+(?:\\[A-Za-z]+)+)?(?:::)?(?:\$[a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z_][a-zA-Z0-9_]+\(\))?$/.exec(needle)) {
     return '<code>' + matches[0] + '</code>^';
   }
   return false;
