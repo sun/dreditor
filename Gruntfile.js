@@ -4,7 +4,21 @@ module.exports = function(grunt) {
   grunt.initConfig({
     // Metadata.
     pkg: grunt.file.readJSON('package.json'),
-    banner: '/**\n' +
+    banner: '// ==UserScript==' + '\n' +
+      '// @name           <%= pkg.title || pkg.name %>' + '\n' +
+      '// @namespace      http://dreditor.org' + '\n' +
+      '// @description    <%= pkg.description %>' + '\n' +
+      '// @icon           https://drupal.org/misc/druplicon.png' + '\n' +
+      '// @version        <%= pkg.version %>' + '\n' +
+      '// @grant          none' + '\n' +
+      '// @include        *://dreditor.org/*' + '\n' +
+      '// @include        *://*.dreditor.org/*' + '\n' +
+      '// @include        *://drupal.org/*' + '\n' +
+      '// @include        *://*.drupal.org/*' + '\n' +
+      '// @include        *://devdrupal.org/*' + '\n' +
+      '// @include        *://*.devdrupal.org/*' + '\n' +
+      '// ==/UserScript==' + '\n\n' +
+      '/**\n' +
       ' * <%= pkg.title || pkg.name %> <%= pkg.version %>\n' +
       '<%= pkg.homepage ? " * " + pkg.homepage + "\\n" : "" %>' +
       ' * <%= pkg.description %>\n' +
@@ -215,6 +229,15 @@ module.exports = function(grunt) {
           'src/less/**/*.less'
         ],
         tasks: ['dev']
+      },
+      gm: {
+        files: [
+          '<%= jshint.package.src %>',
+          '<%= jshint.gruntfile.src %>',
+          '<%= jshint.js.src %>',
+          'src/less/**/*.less'
+        ],
+        tasks: ['gm']
       }
     },
     release: {
@@ -322,6 +345,6 @@ module.exports = function(grunt) {
   // Development tasks.
   grunt.registerTask('dev',   ['default', 'build:firefox']);
   grunt.registerTask('build', ['default', 'compress:chrome', 'build:firefox', 'build:safari']);
-  grunt.registerTask('gm',    ['clean', 'less', 'css2js', 'jshint:js', 'concat', 'copy', 'sed']);
+  grunt.registerTask('gm',    ['less', 'css2js', 'jshint:js', 'concat']);
 
 };
