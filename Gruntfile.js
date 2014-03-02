@@ -57,15 +57,6 @@ module.exports = function(grunt) {
         dest: 'build/<%= pkg.name %>.js'
       }
     },
-    uglify: {
-      options: {
-        banner: '<%= banner %>'
-      },
-      build: {
-        src: '<%= concat.build.dest %>',
-        dest: 'build/<%= pkg.name %>.min.js'
-      }
-    },
     jshint: {
       package: {
         options: {
@@ -154,7 +145,7 @@ module.exports = function(grunt) {
           {
             expand: true,
             cwd: 'build/',
-            src: ['<%= pkg.name %>.min.js'],
+            src: ['<%= pkg.name %>.js'],
             dest: 'build/chrome/'
           }
         ]
@@ -176,7 +167,7 @@ module.exports = function(grunt) {
           {
             expand: true,
             cwd: 'build/',
-            src: ['<%= pkg.name %>.min.js'],
+            src: ['<%= pkg.name %>.js'],
             dest: 'build/firefox/data/'
           }
         ]
@@ -204,7 +195,7 @@ module.exports = function(grunt) {
           {
             expand: true,
             cwd: 'build/',
-            src: ['<%= pkg.name %>.min.js'],
+            src: ['<%= pkg.name %>.js'],
             dest: 'build/<%= pkg.name %>.safariextension/'
           }
         ]
@@ -220,6 +211,15 @@ module.exports = function(grunt) {
           '<%= qunit.all %>'
         ],
         tasks: ['default']
+      },
+      ext: {
+        files: [
+          '<%= jshint.package.src %>',
+          '<%= jshint.gruntfile.src %>',
+          '<%= jshint.js.src %>',
+          'src/less/**/*.less'
+        ],
+        tasks: ['ext']
       },
       dev: {
         files: [
@@ -244,7 +244,7 @@ module.exports = function(grunt) {
     compress: {
       chrome: {
         options: {
-          archive: 'release/chrome.zip',
+          archive: 'release/chrome-<%= pkg.version %>.zip',
           mode: 'zip'
         },
         expand: true,
@@ -254,18 +254,20 @@ module.exports = function(grunt) {
       }
     },
     "mozilla-addon-sdk": {
-      '1_14': {
+      'master': {
         options: {
-          revision: "1.14"
+          revision: "master",
+          github: true
         }
       }
     },
     "mozilla-cfx-xpi": {
       'release': {
         options: {
-          "mozilla-addon-sdk": "1_14",
+          "mozilla-addon-sdk": "master",
           extension_dir: "build/firefox",
-          dist_dir: "release"
+          dist_dir: "release",
+          arguments: "--output-file=<%= pkg.name %>-<%= pkg.version %>.xpi"
         }
       }
     },
@@ -281,7 +283,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-less');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-css2js');
   grunt.loadNpmTasks('grunt-mozilla-addon-sdk');
@@ -290,16 +291,39 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-release');
 
   // Default tasks.
-  grunt.registerTask('default', ['clean', 'less', 'css2js', 'jshint', 'qunit', 'concat', 'uglify', 'copy', 'sed']);
-  grunt.registerTask('dev', ['less', 'css2js', 'concat']);
+  grunt.registerTask('default', ['clean', 'less', 'css2js', 'jshint', 'concat', 'copy', 'sed']);
 
-  // Build extensions.
+  // Test tasks.
+  grunt.registerTask('test', ['qunit']);
+  grunt.registerTask('travis-ci', ['default', 'test']);
+
+  // Autoload Firefox extension.
+  // @see https://addons.mozilla.org/en-US/firefox/addon/autoinstaller/
+  grunt.registerTask('autoload:ff', "Autoload new XPI extension in Firefox", function() {
+    var done = this.async();
+    grunt.util.spawn({
+      cmd: 'wget',
+      args: [
+        '--post-file=release/' + grunt.template.process('<%= pkg.name %>-<%= pkg.version %>.xpi'),
+        'http://localhost:8888'
+      ],
+      opts: grunt.option('debug') ? {stdio: 'inherit'} : {}
+    }, function (error, result, code) {
+      if(code !== 8) {
+        return grunt.warn('Auto-loading Firefox extension failed: (' + code + ') ' + error);
+      }
+      grunt.log.ok('Auto-loaded "' + grunt.template.process('<%= pkg.name %>-<%= pkg.version %>.xpi') + '" into Firefox...');
+      done();
+    });
+  });
+
+  // Build tasks.
   grunt.registerTask('build:chrome', ['compress:chrome']);
-  grunt.registerTask('build:firefox', ['mozilla-cfx-xpi']);
-  grunt.registerTask('build-safari-ext', 'Builds the safari extension', function () {
+  grunt.registerTask('build:firefox', ['mozilla-cfx-xpi', 'autoload:ff']);
+  grunt.registerTask('build:safari', 'Builds the safari extension', function () {
     grunt.util.spawn({
       cmd:'build-safari-ext',
-      args:[grunt.template.process('<%= pkg.name %>'), grunt.template.process(__dirname + '/build/<%= pkg.name %>.safariextension'), __dirname + '/release'],
+      args:[grunt.template.process('<%= pkg.name %>-<%= pkg.version %>'), grunt.template.process(__dirname + '/build/<%= pkg.name %>.safariextension'), __dirname + '/release'],
       fallback:-255
     }, function (error, result, code) {
       if (0 !== code) {
@@ -308,8 +332,10 @@ module.exports = function(grunt) {
       }
     });
   });
-  grunt.registerTask('build:safari', ['build-safari-ext']);
-  grunt.registerTask('build', ['compress:chrome', 'mozilla-cfx-xpi', 'build-safari-ext']);
-  grunt.registerTask('test', ['clean', 'qunit']);
+
+  // Development tasks.
+  grunt.registerTask('dev',   ['default', 'build:firefox']);
+  grunt.registerTask('build', ['default', 'compress:chrome', 'build:firefox', 'build:safari']);
+  grunt.registerTask('gm',    ['clean', 'less', 'css2js', 'jshint:js', 'concat', 'copy', 'sed']);
 
 };
