@@ -229,6 +229,15 @@ module.exports = function(grunt) {
           'src/less/**/*.less'
         ],
         tasks: ['dev']
+      },
+      gm: {
+        files: [
+          '<%= jshint.package.src %>',
+          '<%= jshint.gruntfile.src %>',
+          '<%= jshint.js.src %>',
+          'src/less/**/*.less'
+        ],
+        tasks: ['gm']
       }
     },
     release: {
@@ -336,6 +345,6 @@ module.exports = function(grunt) {
   // Development tasks.
   grunt.registerTask('dev',   ['default', 'build:firefox']);
   grunt.registerTask('build', ['default', 'compress:chrome', 'build:firefox', 'build:safari']);
-  grunt.registerTask('gm',    ['clean', 'less', 'css2js', 'jshint:js', 'concat', 'copy', 'sed']);
+  grunt.registerTask('gm',    ['less', 'css2js', 'jshint:js', 'concat']);
 
 };
