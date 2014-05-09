@@ -1,5 +1,6 @@
 /*global module:false*/
-/*global __dirname:false*/
+/*global require:false*/
+/*global process:false*/
 module.exports = function(grunt) {
   grunt.initConfig({
     // Metadata.
@@ -58,6 +59,9 @@ module.exports = function(grunt) {
       }
     },
     jshint: {
+      options: {
+        reporter: require('jshint-stylish')
+      },
       package: {
         options: {
           jshintrc: '.jshintrc'
@@ -202,33 +206,16 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      default: {
-        files: [
-          '<%= jshint.package.src %>',
-          '<%= jshint.gruntfile.src %>',
-          '<%= jshint.js.src %>',
-          'src/less/**/*.less',
-          '<%= qunit.all %>'
-        ],
-        tasks: ['default']
-      },
-      ext: {
-        files: [
-          '<%= jshint.package.src %>',
-          '<%= jshint.gruntfile.src %>',
-          '<%= jshint.js.src %>',
-          'src/less/**/*.less'
-        ],
-        tasks: ['ext']
-      },
-      dev: {
-        files: [
-          '<%= jshint.package.src %>',
-          '<%= jshint.gruntfile.src %>',
-          '<%= jshint.js.src %>',
-          'src/less/**/*.less'
-        ],
-        tasks: ['dev']
+      files: [
+        '<%= jshint.package.src %>',
+        '<%= jshint.gruntfile.src %>',
+        '<%= jshint.js.src %>',
+        '<%= less.files.src %>',
+        '<%= qunit.all %>'
+      ],
+      tasks: ['default'],
+      options: {
+        interrupt: true
       },
       gm: {
         files: [
@@ -332,7 +319,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build:safari', 'Builds the safari extension', function () {
     grunt.util.spawn({
       cmd:'build-safari-ext',
-      args:[grunt.template.process('<%= pkg.name %>-<%= pkg.version %>'), grunt.template.process(__dirname + '/build/<%= pkg.name %>.safariextension'), __dirname + '/release'],
+      args:[grunt.template.process('<%= pkg.name %>-<%= pkg.version %>'), grunt.template.process(process.cwd() + '/build/<%= pkg.name %>.safariextension'), process.cwd() + '/release'],
       fallback:-255
     }, function (error, result, code) {
       if (0 !== code) {
@@ -341,9 +328,6 @@ module.exports = function(grunt) {
       }
     });
   });
-
-  // Development tasks.
-  grunt.registerTask('dev',   ['default', 'build:firefox']);
   grunt.registerTask('build', ['default', 'compress:chrome', 'build:firefox', 'build:safari']);
   grunt.registerTask('gm',    ['less', 'css2js', 'jshint:js', 'concat']);
 
