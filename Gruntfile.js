@@ -240,7 +240,7 @@ module.exports = function(grunt) {
     compress: {
       chrome: {
         options: {
-          archive: 'release/chrome-<%= pkg.version %>.zip',
+          archive: 'release/chrome/<%= pkg.name %>.zip',
           mode: 'zip'
         },
         expand: true,
@@ -262,8 +262,10 @@ module.exports = function(grunt) {
         options: {
           "mozilla-addon-sdk": "master",
           extension_dir: "build/firefox",
-          dist_dir: "release",
-          arguments: "--output-file=<%= pkg.name %>-<%= pkg.version %>.xpi"
+          dist_dir: "release/firefox",
+          // --output-file is an experimental option, not guaranteed to exist.
+          // @see https://developer.mozilla.org/en-US/Add-ons/SDK/Tools/cfx#Experimental_Options_3
+          arguments: "--output-file=<%= pkg.name %>.xpi"
         }
       }
     },
@@ -286,6 +288,9 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-release');
 
+  // Install tasks.
+  grunt.registerTask('install', ['mozilla-addon-sdk']);
+
   // Default tasks.
   grunt.registerTask('default', ['clean', 'less', 'css2js', 'jshint', 'concat', 'copy', 'sed']);
 
@@ -295,33 +300,42 @@ module.exports = function(grunt) {
 
   // Autoload Firefox extension.
   // @see https://addons.mozilla.org/en-US/firefox/addon/autoinstaller/
-  grunt.registerTask('autoload:ff', "Autoload new XPI extension in Firefox", function() {
+  grunt.registerTask('autoload:ff', "Autoload new XPI extension in Firefox", function () {
     var done = this.async();
+    var xpi = 'release/firefox/' + grunt.template.process('<%= pkg.name %>.xpi');
     grunt.util.spawn({
       cmd: 'wget',
       args: [
-        '--post-file=release/' + grunt.template.process('<%= pkg.name %>-<%= pkg.version %>.xpi'),
+        '--post-file=' + xpi,
         'http://localhost:8888'
       ],
-      opts: grunt.option('debug') ? {stdio: 'inherit'} : {}
-    }, function (error, result, code) {
-      if(code !== 8) {
-        return grunt.warn('Auto-loading Firefox extension failed: (' + code + ') ' + error);
+      opts: !grunt.option('debug') ? {} : {
+        stdio: 'inherit'
       }
-      grunt.log.ok('Auto-loaded "' + grunt.template.process('<%= pkg.name %>-<%= pkg.version %>.xpi') + '" into Firefox...');
+    },
+    function (error, result, code) {
+      if (code !== 8) {
+        return grunt.warn('Auto-loading ' + xpi + ' failed: (' + code + ') ' + error);
+      }
+      grunt.log.ok('Auto-loaded ' + xpi + ' into Firefox.');
       done();
     });
   });
 
   // Build tasks.
   grunt.registerTask('build:chrome', ['compress:chrome']);
-  grunt.registerTask('build:firefox', ['mozilla-cfx-xpi', 'autoload:ff']);
+  grunt.registerTask('build:firefox', ['mozilla-cfx-xpi']);
   grunt.registerTask('build:safari', 'Builds the safari extension', function () {
     grunt.util.spawn({
-      cmd:'build-safari-ext',
-      args:[grunt.template.process('<%= pkg.name %>-<%= pkg.version %>'), grunt.template.process(process.cwd() + '/build/<%= pkg.name %>.safariextension'), process.cwd() + '/release'],
-      fallback:-255
-    }, function (error, result, code) {
+      cmd: 'build-safari-ext',
+      args: [
+        grunt.template.process('<%= pkg.name %>'),
+        grunt.template.process(process.cwd() + '/build/<%= pkg.name %>.safariextension'),
+        process.cwd() + '/release/safari'
+      ],
+      fallback: -255
+    },
+    function (error, result, code) {
       if (0 !== code) {
         grunt.log.errorlns(result.stdout);
         grunt.log.errorlns(result.stderr);
