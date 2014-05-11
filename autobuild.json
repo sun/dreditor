@@ -1,0 +1,5 @@
+[
+  "npm install",
+  "grunt install --no-color --stack --verbose",
+  "grunt build --no-color --stack --verbose"
+]
