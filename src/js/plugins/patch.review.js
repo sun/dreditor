@@ -224,7 +224,10 @@ Drupal.dreditor.patchReview = {
         return true;
       }
       var $elements = $(this.elements);
-      var markup = '<code>\n';
+      // codefilter module does not support CODE tags with attributes, so we
+      // double-wrap the output in two CODE tags.
+      var markup = '<code class="diff">';
+      markup += '<code>\n';
       // Add file information.
       var lastfile = $elements.eq(0).prevAll('tr.file:has(a.file)').get(0);
       if (lastfile) {
@@ -272,6 +275,7 @@ Drupal.dreditor.patchReview = {
         lastline = $element.get(0);
       });
 
+      markup += '</code>';
       markup += '</code>\n';
       markup += '\n' + this.comment;
       comments.push(markup);
