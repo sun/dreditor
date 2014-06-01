@@ -147,8 +147,6 @@
 }
 #dreditor #code .pre {
   white-space: pre;
-  background-color: transparent;
-  position: relative;
 }
 #dreditor #code thead .line-ruler {
   border-left: 1px solid rgba(0,0,0,0.15);
@@ -184,8 +182,8 @@
   display: none;
 }
 #dreditor #code tr.file {
-  color: #666;
   background-color: #f9f9fc;
+  color: #666;
 }
 #dreditor #code tr.file a {
   color: #064A6F;
@@ -196,10 +194,14 @@
 }
 #dreditor #code tr.old {
   background-color: #fffbfb;
-  color: #CC0000;
+  color: #c00;
+}
+#dreditor #code tr.old.comment {
+  //background-color: #fbf3f3;
+  color: #c33;
 }
 #dreditor #code tr.old a {
-  color: #CC0000;
+  color: #c00;
 }
 #dreditor #code tr.old .ln {
   background-color: #f7c8c8;
@@ -207,13 +209,15 @@
 }
 #dreditor #code tr.new {
   background-color: #fbfffb;
-  color: #008503;
+  //color: #070;
+  color: #00a;
   float: none;
   font-size: 100%;
   font-weight: normal;
 }
-#dreditor #code tr.new .pre {
-  color: #00a;
+#dreditor #code tr.new.comment {
+  //background-color: #f3fbf3;
+  color: #070;
 }
 #dreditor #code tr.new a {
   color: #0a0;
@@ -221,9 +225,6 @@
 #dreditor #code tr.new .ln {
   background-color: #ceffce;
   border-color: #b4e2b4;
-}
-#dreditor #code tr.new.comment .pre {
-  color: #070;
 }
 tr.selected td {
   background: transparent;
